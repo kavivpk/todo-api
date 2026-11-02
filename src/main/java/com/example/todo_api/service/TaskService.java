@@ -20,6 +20,21 @@ public class TaskService {
         return taskRepository.findAll();
     }
 
+    public List<Task> getTasks(Boolean completed, String search) {
+        boolean hasSearch = search != null && !search.isBlank();
+
+        if (completed != null && hasSearch) {
+            return taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, search.trim());
+        }
+        if (completed != null) {
+            return taskRepository.findByCompleted(completed);
+        }
+        if (hasSearch) {
+            return taskRepository.findByTitleContainingIgnoreCase(search.trim());
+        }
+        return getAllTasks();
+    }
+
     public Task getTaskById(Long id) {
         return findTaskOrThrow(id);
     }
