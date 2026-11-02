@@ -21,16 +21,17 @@ public class TaskService {
     }
 
     public List<Task> getTasks(Boolean completed, String search) {
-        boolean hasSearch = search != null && !search.isBlank();
+        String searchTerm = search == null ? "" : search.trim();
+        boolean hasSearch = !searchTerm.isEmpty();
 
         if (completed != null && hasSearch) {
-            return taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, search.trim());
+            return taskRepository.findByCompletedAndTitleContainingIgnoreCase(completed, searchTerm);
         }
         if (completed != null) {
             return taskRepository.findByCompleted(completed);
         }
         if (hasSearch) {
-            return taskRepository.findByTitleContainingIgnoreCase(search.trim());
+            return taskRepository.findByTitleContainingIgnoreCase(searchTerm);
         }
         return getAllTasks();
     }
