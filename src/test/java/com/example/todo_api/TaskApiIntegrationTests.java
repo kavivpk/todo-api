@@ -58,6 +58,10 @@ class TaskApiIntegrationTests {
         long id = createdTask.get("id").asLong();
         assertNotEquals(987654L, id);
 
+        JsonNode allTasks = objectMapper.readTree(get("/api/tasks").body());
+        assertEquals(1, allTasks.size());
+        assertEquals("Prepare demo", allTasks.get(0).get("title").asText());
+
         ApiResponse fetched = get("/api/tasks/" + id);
         assertEquals(HttpStatus.OK.value(), fetched.statusCode());
         assertEquals("Prepare demo", objectMapper.readTree(fetched.body()).get("title").asText());
@@ -120,6 +124,15 @@ class TaskApiIntegrationTests {
         JsonNode matchingSearch = objectMapper.readTree(get("/api/tasks?search=sQl").body());
         assertEquals(1, matchingSearch.size());
         assertEquals("Learn SQL", matchingSearch.get(0).get("title").asText());
+
+        JsonNode combinedFilter = objectMapper.readTree(
+                get("/api/tasks?completed=true&search=sQl").body());
+        assertEquals(1, combinedFilter.size());
+        assertEquals("Learn SQL", combinedFilter.get(0).get("title").asText());
+
+        JsonNode emptyCombinedFilter = objectMapper.readTree(
+                get("/api/tasks?completed=false&search=sQl").body());
+        assertEquals(0, emptyCombinedFilter.size());
 
         JsonNode emptySearch = objectMapper.readTree(get("/api/tasks?search=no-match").body());
         assertEquals(0, emptySearch.size());
