@@ -154,7 +154,26 @@ class TaskApiIntegrationTests {
         ApiResponse openApi = get("/v3/api-docs");
         assertEquals(HttpStatus.OK.value(), openApi.statusCode());
         assertNotNull(openApi.body());
-        assertTrue(openApi.body().contains("/api/tasks"));
+        JsonNode document = objectMapper.readTree(openApi.body());
+        JsonNode paths = document.get("paths");
+        assertNotNull(paths.get("/api/tasks").get("get"));
+        assertNotNull(paths.get("/api/tasks").get("post"));
+        assertNotNull(paths.get("/api/tasks/{id}").get("get"));
+        assertNotNull(paths.get("/api/tasks/{id}").get("put"));
+        assertNotNull(paths.get("/api/tasks/{id}").get("delete"));
+
+        JsonNode listOperation = paths.get("/api/tasks").get("get");
+        assertTrue(listOperation.get("description").asText().contains("case-insensitive"));
+        assertTrue(listOperation.get("parameters").toString().contains("completed"));
+        assertTrue(listOperation.get("parameters").toString().contains("search"));
+
+        JsonNode createOperation = paths.get("/api/tasks").get("post");
+        assertNotNull(createOperation.get("responses").get("201"));
+        assertNotNull(createOperation.get("responses").get("400"));
+        assertTrue(createOperation.toString().contains("Practice SQL queries"));
+        assertNotNull(paths.get("/api/tasks/{id}").get("put").get("responses").get("404"));
+        assertNotNull(paths.get("/api/tasks/{id}").get("delete").get("responses").get("204"));
+        assertNotNull(paths.get("/api/tasks/{id}").get("delete").get("responses").get("404"));
 
         ApiResponse swaggerUi = get("/swagger-ui/index.html");
         assertEquals(HttpStatus.OK.value(), swaggerUi.statusCode());

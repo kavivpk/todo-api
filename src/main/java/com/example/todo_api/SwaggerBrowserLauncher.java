@@ -3,7 +3,6 @@ package com.example.todo_api;
 import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -37,7 +36,7 @@ public class SwaggerBrowserLauncher {
                     return;
                 }
             }
-        } catch (IOException | UnsupportedOperationException | SecurityException exception) {
+        } catch (Exception exception) {
             logger.warn("Java desktop browsing failed; trying the Windows browser fallback.", exception);
         }
 
@@ -46,16 +45,16 @@ public class SwaggerBrowserLauncher {
 
     private void openWithWindowsCommand() {
         String operatingSystem = System.getProperty("os.name", "");
-        if (!operatingSystem.toLowerCase(Locale.ROOT).startsWith("windows")) {
+        if (!operatingSystem.regionMatches(true, 0, "Windows", 0, "Windows".length())) {
             logger.warn("Could not open Swagger UI automatically: Java desktop browsing is unavailable "
                     + "and the Windows browser fallback cannot be used on {}.", operatingSystem);
             return;
         }
 
         try {
-            new ProcessBuilder("cmd.exe", "/c", "start", "", SWAGGER_UI_URI.toString()).start();
+            new ProcessBuilder("rundll32.exe", "url.dll,FileProtocolHandler", SWAGGER_UI_URI.toString()).start();
             logger.info("Requested Windows to open Swagger UI in the default browser: {}", SWAGGER_UI_URI);
-        } catch (IOException | SecurityException exception) {
+        } catch (IOException | RuntimeException exception) {
             logger.error("Could not launch the default browser for Swagger UI: {}", SWAGGER_UI_URI, exception);
         }
     }
