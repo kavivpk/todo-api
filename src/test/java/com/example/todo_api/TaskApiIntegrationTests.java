@@ -57,6 +57,7 @@ class TaskApiIntegrationTests {
         JsonNode createdTask = objectMapper.readTree(created.body());
         long id = createdTask.get("id").asLong();
         assertNotEquals(987654L, id);
+        assertTrue(taskRepository.findById(id).isPresent());
 
         JsonNode allTasks = objectMapper.readTree(get("/api/tasks").body());
         assertEquals(1, allTasks.size());

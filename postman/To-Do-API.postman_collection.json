@@ -1,0 +1,625 @@
+{
+  "info": {
+    "_postman_id": "570b2827-9226-46ce-a623-71aaf8b3bf52",
+    "name": "To-Do REST API - Complete Test Collection",
+    "description": "Exercises the existing Spring Boot To-Do API: hello, CRUD, search/filter, validation, malformed JSON, missing IDs, and cleanup. Requests only delete tasks created by this collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('noMatchKeyword')) {",
+          "  pm.collectionVariables.set('noMatchKeyword', 'NoMatch_' + pm.variables.replaceIn('{{$guid}}'));",
+          "}",
+          "if (!pm.collectionVariables.get('missingTaskId')) {",
+          "  pm.collectionVariables.set('missingTaskId', '9223372036854775807');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "taskId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "incompleteTaskId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "noMatchKeyword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "missingTaskId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Hello - API status",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/hello"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.unset('taskId');",
+              "pm.collectionVariables.unset('incompleteTaskId');",
+              "pm.collectionVariables.set('taskCreatedThisRun', false);",
+              "pm.collectionVariables.set('incompleteTaskCreatedThisRun', false);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 200 and API status message', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.text()).to.include('Todo API is running!');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - List all tasks",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 200 and a JSON array', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json()).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST - Create completed SQL task",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"PostmanDemoSQL Practice\",\n  \"description\": \"Created by the Postman demonstration collection\",\n  \"completed\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/tasks"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.unset('taskId');",
+              "pm.collectionVariables.set('taskCreatedThisRun', false);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('creates task with 201 and a generated ID', function () {",
+              "  pm.response.to.have.status(201);",
+              "  const task = pm.response.json();",
+              "  pm.expect(task.id).to.exist;",
+              "  pm.expect(task.title).to.eql('PostmanDemoSQL Practice');",
+              "  pm.collectionVariables.set('taskId', task.id);",
+              "  pm.collectionVariables.set('taskCreatedThisRun', true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST - Create incomplete task",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"PostmanDemoSpring Reading\",\n  \"description\": \"Created for the incomplete-task filter test\",\n  \"completed\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/tasks"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.unset('incompleteTaskId');",
+              "pm.collectionVariables.set('incompleteTaskCreatedThisRun', false);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('creates incomplete task with 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "  const task = pm.response.json();",
+              "  pm.expect(task.id).to.exist;",
+              "  pm.expect(task.completed).to.eql(false);",
+              "  pm.collectionVariables.set('incompleteTaskId', task.id);",
+              "  pm.collectionVariables.set('incompleteTaskCreatedThisRun', true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Get created task by ID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns created task from SQLite with 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const task = pm.response.json();",
+              "  pm.expect(String(task.id)).to.eql(String(pm.collectionVariables.get('taskId')));",
+              "  pm.expect(task.title).to.eql('PostmanDemoSQL Practice');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT - Update created task",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"PostmanDemoSQL Updated\",\n  \"description\": \"Updated by the Postman collection\",\n  \"completed\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('updates task with 200 and returns new values', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const task = pm.response.json();",
+              "  pm.expect(task.title).to.eql('PostmanDemoSQL Updated');",
+              "  pm.expect(task.description).to.eql('Updated by the Postman collection');",
+              "  pm.expect(task.completed).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Filter completed tasks",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks?completed=true"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('includes the completed collection task', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const tasks = pm.response.json();",
+              "  pm.expect(tasks.some(task => String(task.id) === String(pm.collectionVariables.get('taskId')) && task.completed === true)).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Filter incomplete tasks",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks?completed=false"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('includes the incomplete collection task', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const tasks = pm.response.json();",
+              "  pm.expect(tasks.some(task => String(task.id) === String(pm.collectionVariables.get('incompleteTaskId')) && task.completed === false)).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Search SQL in titles (case-insensitive)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks?search=sql"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('finds the SQL task ignoring letter case', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const tasks = pm.response.json();",
+              "  pm.expect(tasks.some(task => String(task.id) === String(pm.collectionVariables.get('taskId')))).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Combined completed and title search",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks?completed=true&search=PostmanDemoSQL"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('combined filters return the matching completed task', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const tasks = pm.response.json();",
+              "  pm.expect(tasks.some(task => String(task.id) === String(pm.collectionVariables.get('taskId')) && task.completed === true)).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Empty search result",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks?search={{noMatchKeyword}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns an empty array when no title matches', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json()).to.be.an('array').that.is.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST - Invalid blank title (expect 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"   \",\n  \"description\": \"Invalid blank title\",\n  \"completed\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/tasks"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('rejects blank title with consistent 400 JSON error', function () {",
+              "  pm.response.to.have.status(400);",
+              "  const error = pm.response.json();",
+              "  pm.expect(error.status).to.eql(400);",
+              "  pm.expect(error.error).to.eql('Bad Request');",
+              "  pm.expect(error.message).to.be.a('string');",
+              "  pm.expect(error.trace).to.not.exist;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST - Invalid malformed JSON (expect 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"Malformed JSON\",\"completed\":",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/tasks"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('rejects malformed JSON with 400 JSON error', function () {",
+              "  pm.response.to.have.status(400);",
+              "  const error = pm.response.json();",
+              "  pm.expect(error.status).to.eql(400);",
+              "  pm.expect(error.error).to.eql('Bad Request');",
+              "  pm.expect(error.trace).to.not.exist;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Missing task ID (expect 404)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks/{{missingTaskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns consistent 404 JSON error for missing task', function () {",
+              "  pm.response.to.have.status(404);",
+              "  const error = pm.response.json();",
+              "  pm.expect(error.status).to.eql(404);",
+              "  pm.expect(error.error).to.eql('Not Found');",
+              "  pm.expect(error.message).to.be.a('string');",
+              "  pm.expect(error.trace).to.not.exist;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT - Missing task ID (expect 404)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Missing task update\",\n  \"description\": \"This task does not exist\",\n  \"completed\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/tasks/{{missingTaskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 404 for update of missing task', function () {",
+              "  pm.response.to.have.status(404);",
+              "  pm.expect(pm.response.json().status).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE - Missing task ID (expect 404)",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/tasks/{{missingTaskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 404 for deletion of missing task', function () {",
+              "  pm.response.to.have.status(404);",
+              "  pm.expect(pm.response.json().status).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE - Clean up created completed task",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('taskCreatedThisRun') || !pm.collectionVariables.get('taskId')) {",
+              "  pm.execution.skipRequest();",
+              "}",
+              "pm.collectionVariables.set('taskCreatedThisRun', false);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('deletes only the task created by this collection', function () {",
+              "  pm.response.to.have.status(204);",
+              "  pm.expect(pm.response.text()).to.eql('');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Confirm created task was deleted (expect 404)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('deleted task is no longer available', function () {",
+              "  pm.response.to.have.status(404);",
+              "  pm.expect(pm.response.json().status).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE - Clean up created incomplete task",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/tasks/{{incompleteTaskId}}"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('incompleteTaskCreatedThisRun') || !pm.collectionVariables.get('incompleteTaskId')) {",
+              "  pm.execution.skipRequest();",
+              "}",
+              "pm.collectionVariables.set('incompleteTaskCreatedThisRun', false);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('cleans up the second task created by this collection', function () {",
+              "  pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
