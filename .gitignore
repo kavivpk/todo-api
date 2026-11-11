@@ -4,6 +4,34 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Local databases and generated database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+.secrets/
+secrets/
+application-local.properties
+application-local.yml
+application-local.yaml
+*.secret
+*.credentials
+*.pem
+*.key
+*.p12
+*.jks
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
 ### STS ###
 .apt_generated
 .classpath
