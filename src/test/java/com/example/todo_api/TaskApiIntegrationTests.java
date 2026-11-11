@@ -89,6 +89,12 @@ class TaskApiIntegrationTests {
         assertEquals(HttpStatus.BAD_REQUEST.value(), invalidCreate.statusCode());
         assertErrorResponse(invalidCreate, 400, "Bad Request");
 
+        ApiResponse invalidJson = post("/api/tasks", """
+                {"title":"Valid title","completed":
+                """);
+        assertEquals(HttpStatus.BAD_REQUEST.value(), invalidJson.statusCode());
+        assertErrorResponse(invalidJson, 400, "Bad Request");
+
         ApiResponse invalidUpdate = put("/api/tasks/987654", """
                 {"title":" ","description":"Invalid task","completed":false}
                 """);
@@ -102,10 +108,15 @@ class TaskApiIntegrationTests {
         assertEquals(HttpStatus.NOT_FOUND.value(), missingGet.statusCode());
         assertErrorResponse(missingGet, 404, "Not Found");
 
-        assertEquals(HttpStatus.NOT_FOUND.value(), put("/api/tasks/987654", """
+        ApiResponse missingPut = put("/api/tasks/987654", """
                 {"title":"Missing task","description":"","completed":false}
-                """).statusCode());
-        assertEquals(HttpStatus.NOT_FOUND.value(), delete("/api/tasks/987654").statusCode());
+                """);
+        assertEquals(HttpStatus.NOT_FOUND.value(), missingPut.statusCode());
+        assertErrorResponse(missingPut, 404, "Not Found");
+
+        ApiResponse missingDelete = delete("/api/tasks/987654");
+        assertEquals(HttpStatus.NOT_FOUND.value(), missingDelete.statusCode());
+        assertErrorResponse(missingDelete, 404, "Not Found");
     }
 
     @Test
@@ -185,6 +196,7 @@ class TaskApiIntegrationTests {
         assertEquals(status, body.get("status").asInt());
         assertEquals(error, body.get("error").asText());
         assertTrue(body.hasNonNull("message"));
+        assertTrue(!body.has("trace"));
     }
 
     private record ApiResponse(int statusCode, String body) {
